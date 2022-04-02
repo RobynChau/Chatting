@@ -15,13 +15,16 @@ struct MainMessagesView: View {
     @State private var chatUser: User?
     @ObservedObject var viewModel = MainMessagesViewModel()
 
+    private var chatLogViewModel = ChatLogViewModel(chatUser: nil)
+    @State private var navigatingToChatLogView = false
+
     var body: some View {
         NavigationView {
             VStack {
                 customNavigationBar
                 messagesView
-                NavigationLink("", isActive: $showingChatLog) {
-                    ChatLogView(chatUser: chatUser)
+                NavigationLink("", isActive: $navigatingToChatLogView) {
+                    ChatLogView(viewModel: chatLogViewModel)
                 }
                 .navigationViewStyle(.stack)
                 newMessageButton
@@ -93,29 +96,40 @@ struct MainMessagesView: View {
 
     private var messagesView: some View {
         ScrollView {
-            ForEach(0..<10, id: \.self) {_ in
-                NavigationLink {
-                    Text("Username")
+            ForEach(viewModel.recentMessages) { message in
+                Button {
+                    let uid = FirebaseManager.shared.auth.currentUser?.uid == message.fromID ? message.toID : message.fromID
+                    self.chatUser = .init(data: ["email": message.email, "profileImageURL": message.profileImageURL, "uid": uid])
+                    self.chatLogViewModel.chatUser = self.chatUser
+                    self.chatLogViewModel.fetchMessages()
+                    self.navigatingToChatLogView.toggle()
                 } label: {
-                    VStack {
+                    VStack(alignment: .leading) {
                         HStack(spacing: 16) {
-                            Image(systemName: "person.fill")
-                                .font(.system(size: 32))
-                                .padding(8)
-                                .overlay(RoundedRectangle(cornerRadius: 44)
-                                            .stroke(Color(.label), lineWidth: 1)
+                            if (message.profileImageURL != nil) {
+                            WebImage(url: URL(string: message.profileImageURL))
+                                .resizable()
+                                .scaledToFill()
+                                .frame(width: 44, height: 44)
+                                .clipShape(Circle())
+                                .overlay(Circle().stroke(Color(.label), lineWidth: 1)
                                 )
+
+                            } else {
+                            Image(systemName: "person.fill")
+                                .font(.system(size: 34, weight: .heavy))
+                            }
                             VStack(alignment: .leading) {
-                                Text("Username")
+                                Text(message.username)
                                     .font(.headline)
-                                Text("Message sent to user")
+                                Text(message.text)
                                     .font(.subheadline)
                                     .foregroundColor(.secondary)
                             }
 
                             Spacer()
 
-                            Text("22d")
+                            Text(message.timeAgo)
                                 .font(.subheadline)
                         }
                         Divider()

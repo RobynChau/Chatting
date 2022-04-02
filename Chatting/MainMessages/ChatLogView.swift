@@ -13,13 +13,6 @@ struct ChatLogView: View {
     @State private var showingImagePicker = false
     @State private var inputImage: UIImage?
 
-    let chatUser: User?
-
-    init(chatUser: User?) {
-        self.chatUser = chatUser
-        viewModel = ChatLogViewModel(chatUser: chatUser)
-    }
-
     var body: some View {
         VStack {
             messagesView
@@ -28,10 +21,13 @@ struct ChatLogView: View {
                 .padding(.horizontal)
                 .background(Color.white.ignoresSafeArea())
         }
-        .navigationTitle(chatUser?.email ?? "")
+        .navigationTitle(viewModel.chatUser?.email ?? "")
         .navigationBarTitleDisplayMode(.inline)
         .fullScreenCover(isPresented: $showingImagePicker) {
             ImagePicker(image: $inputImage)
+        }
+        .onDisappear {
+            viewModel.firestoreListener?.remove()
         }
     }
 
@@ -105,6 +101,6 @@ struct ChatLogView: View {
 
 struct ChatLogView_Previews: PreviewProvider {
     static var previews: some View {
-        ChatLogView(chatUser: User.example)
+        ChatLogView(viewModel: ChatLogViewModel(chatUser: nil))
     }
 }

@@ -9,10 +9,13 @@ import Foundation
 
 
 struct ChatMessage: Identifiable{
-    var id = UUID()
+    var id: String { documentID }
+
+    let documentID: String
     let fromID, toID, text: String
 
-    init(data: [String: Any]) {
+    init(documentID: String, data: [String: Any]) {
+        self.documentID = documentID
         self.fromID = data["fromID"] as? String ?? ""
         self.toID  = data["toID"] as? String ?? ""
         self.text = data["text"] as? String ?? ""
